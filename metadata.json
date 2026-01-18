@@ -1,0 +1,7 @@
+{
+  "name": "Auditoria Dev",
+  "description": "An advanced AI-powered return verification system that compares client photos with return items, detecting visual discrepancies, EAN code mismatches, and item damage.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
