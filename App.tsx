@@ -195,6 +195,7 @@ const App: React.FC = () => {
     const now = new Date();
     const dateStr = now.toLocaleString();
     
+    // Page 1: Resumen y Datos Detectados
     doc.setFillColor(79, 70, 229);
     doc.rect(0, 0, 210, 45, 'F');
     doc.setTextColor(255, 255, 255);
@@ -285,40 +286,43 @@ const App: React.FC = () => {
       currentY += (splitDetails.length * 5) + 8;
     });
 
+    // Page(s): Fotos de Referencia (Página completa por foto)
     doc.addPage();
     doc.setFillColor(79, 70, 229);
     doc.rect(0, 0, 210, 25, 'F');
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
-    doc.text("FOTOS REFERENCIA CLIENTE", 15, 17);
-    try { doc.addImage(clientImg.base64, 'JPEG', 15, 35, 180, 130, undefined, 'FAST'); } catch (e) {}
+    doc.text("FOTO REFERENCIA CLIENTE", 15, 17);
+    try { 
+      // Calculamos dimensiones para ocupar casi toda la hoja manteniendo margen
+      doc.addImage(clientImg.base64, 'JPEG', 10, 30, 190, 250, undefined, 'FAST'); 
+    } catch (e) {
+      console.error("Error añadiendo foto cliente al PDF", e);
+    }
 
-    doc.addPage();
-    doc.setFillColor(79, 70, 229);
-    doc.rect(0, 0, 210, 25, 'F');
-    doc.setTextColor(255, 255, 255);
-    doc.text("FOTOS PRODUCTO DEVUELTO", 15, 17);
-    let imgY = 35;
-    let col = 0;
+    // Page(s): Fotos de Producto Devuelto (Página completa por cada foto)
     returnImgs.forEach((img, idx) => {
-      if (idx > 0 && idx % 4 === 0) {
-        doc.addPage();
-        doc.setFillColor(79, 70, 229);
-        doc.rect(0, 0, 210, 25, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.text("FOTOS PRODUCTO DEVUELTO (CONT.)", 15, 17);
-        imgY = 35;
+      doc.addPage();
+      doc.setFillColor(79, 70, 229);
+      doc.rect(0, 0, 210, 25, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text(`FOTO DEVOLUCIÓN #${idx + 1}`, 15, 17);
+      try { 
+        // Imagen a página completa con margen pequeño
+        doc.addImage(img.base64, 'JPEG', 10, 30, 190, 250, undefined, 'FAST'); 
+      } catch (e) {
+        console.error(`Error añadiendo foto devolución ${idx + 1} al PDF`, e);
       }
-      const x = col === 0 ? 15 : 110;
-      try { doc.addImage(img.base64, 'JPEG', x, imgY, 85, 65, undefined, 'FAST'); } catch (e) {}
-      if (col === 1) { col = 0; imgY += 75; } else { col = 1; }
     });
 
     const hasAnyWarning = reportData.eanMatch === 'WARNING' || reportData.visualMatch === 'WARNING' || reportData.damageDetected === 'WARNING';
     const suffix = hasAnyWarning ? "S" : "N";
     const ts = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth() + 1).padStart(2, '0')}${now.getFullYear()}_${String(now.getHours()).padStart(2, '0')}${String(now.getMinutes()).padStart(2, '0')}`;
     const shippingNum = detected.shippingNumber || reportData.shippingNumber || "No_detectado";
+    
     return { 
       base64: doc.output('datauristring').split(',')[1], 
       fileName: `${shippingNum}_${ts}_${suffix}.pdf`, 
